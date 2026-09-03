@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SJU IV Pump Simulator</title>
+<title>IV Pump Simulator</title>
 <style>
 :root{
   --crimson:#9E1B32;
@@ -37,17 +37,12 @@ body{
   border-bottom:4px solid var(--crimson);
   margin-bottom:16px;
 }
-.sju-mark{
-  color:var(--crimson);
-  font-weight:900;font-size:2rem;letter-spacing:-.08em;
-  border-right:2px solid var(--crimson);padding-right:18px;
-}
 .header h1{margin:0;color:#172c3a;font-size:2rem}
 .header p{margin:3px 0 0;color:var(--gray)}
 
 .layout{
   display:grid;
-  grid-template-columns:400px 1fr;
+  grid-template-columns:400px 1fr 260px;
   gap:18px;
   align-items:stretch;
 }
@@ -135,9 +130,6 @@ button{font-family:inherit}
 .pump-brand{
   display:flex;align-items:center;gap:12px
 }
-.pump-sju{
-  color:var(--crimson);font-size:1.55rem;font-weight:900
-}
 .status{
   display:flex;align-items:center;gap:7px;
   background:#f4f5f4;border:1px solid #aaa;border-radius:18px;
@@ -148,10 +140,18 @@ button{font-family:inherit}
 .exit{display:none;margin-right:10px;border:0;border-radius:6px;padding:6px 9px;background:var(--gray-dark);color:#fff;font-weight:800;cursor:pointer}
 
 .pump-body{
-  display:grid;
-  grid-template-columns:minmax(310px,1fr) 300px;
-  gap:18px;
-  align-items:start;
+  display:block;
+}
+
+.iv-panel{
+  background:rgba(255,255,255,.75);
+  border:1px solid #d0d1d1;
+  border-radius:14px;
+  padding:16px 8px;
+  box-shadow:0 4px 18px rgba(0,0,0,.08);
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
 }
 
 .screen{
@@ -241,17 +241,6 @@ button{font-family:inherit}
   position:absolute;top:45%;left:0;right:0;text-align:center;
   font-weight:900;color:#21465b;z-index:3;text-shadow:0 1px 2px white
 }
-.bag-label .sju-small{color:var(--crimson);font-size:1.15rem}
-.scale{
-  position:absolute;right:-31px;top:20px;height:235px;width:25px;
-  display:flex;flex-direction:column;justify-content:space-between;
-  font-size:.63rem;color:#53616a;font-weight:700
-}
-.scale:before{
-  content:"";position:absolute;right:1px;top:0;bottom:0;width:2px;background:#53616a
-}
-.scale span{position:relative;background:rgba(255,255,255,.55);padding-left:2px}
-.scale span:before{content:"";position:absolute;right:0;top:50%;width:9px;height:1px;background:#53616a;transform:translateY(-50%)}
 .port{
   position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);
   width:34px;height:24px;border:4px solid #72818a;border-top:0;border-radius:0 0 8px 8px;background:#dce5e8
@@ -305,19 +294,19 @@ button{font-family:inherit}
 body.pump-only{background:#bfc0bd}
 body.pump-only .app{max-width:1250px;min-height:100vh;display:flex;flex-direction:column;justify-content:center}
 body.pump-only .header,body.pump-only .layout>.card{display:none}
-body.pump-only .layout{display:block}
-body.pump-only .pump{min-height:94vh}
+body.pump-only .layout{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+body.pump-only .pump{min-height:94vh;flex:1 1 700px}
 body.pump-only .exit{display:inline-block}
-body.pump-only .pump-body{grid-template-columns:1fr 360px;align-items:center}
 body.pump-only .screen{max-width:900px;margin:auto}
 body.pump-only .screen-rate{font-size:clamp(4rem,9vw,7rem)}
 body.pump-only .screen-value{font-size:1.35rem}
+body.pump-only .iv-panel{flex:0 0 260px;min-height:94vh;align-items:center}
 body.pump-only .iv-area{min-height:690px}
 
 @media(max-width:1050px){
   .layout{grid-template-columns:330px 1fr}
-  .pump-body{grid-template-columns:1fr}
-  .iv-area{min-height:auto;order:2}
+  .iv-panel{grid-column:1 / -1;order:3}
+  .iv-area{min-height:auto}
 }
 @media(max-width:760px){
   .layout{grid-template-columns:1fr}
@@ -332,7 +321,6 @@ body.pump-only .iv-area{min-height:690px}
 <div class="app">
 
 <header class="header">
-  <div class="sju-mark">SJU</div>
   <div>
     <h1>IV Pump Simulator</h1>
     <p>Practice programming an IV infusion pump.</p>
@@ -368,15 +356,7 @@ body.pump-only .iv-area{min-height:690px}
     <div id="answerMessage" class="message"></div>
     <button class="action program" id="programPump" style="display:none">PROGRAM PUMP</button>
   </div>
-
-  <div id="freeArea" style="display:none">
-    <div class="field">
-      <label>IV bag volume (mL)</label>
-      <input id="freeBag" type="number" min="1" step="1" value="1000">
-    </div>
-  </div>
-
-  <div class="free-note">
+<div class="free-note">
     Select RATE, VTBI, or TIME on the pump and use the keypad. In Free Program mode,
     you can also edit the displayed value directly on the pump screen.
   </div>
@@ -387,7 +367,7 @@ body.pump-only .iv-area{min-height:690px}
     <button class="action reset-side" id="clear">↻ RESET</button>
   </div>
 
-  <div class="controls-row">
+  <div class="controls-row" id="pumpOnlyArea" style="display:none">
     <button class="action project" id="pumpOnly">▣ PUMP SCREEN ONLY</button>
   </div>
 
@@ -396,10 +376,10 @@ body.pump-only .iv-area{min-height:690px}
   <div class="speed">
     <label>Simulation speed</label>
     <div class="speed-row">
-      <input id="speed" type="range" min="1" max="120" value="30">
-      <strong><span id="speedValue">30</span>×</strong>
+      <input id="speed" type="range" min="1" max="120" value="1">
+      <strong><span id="speedValue">1</span>×</strong>
     </div>
-    <small>30× makes a 4-hour infusion take about 8 minutes.</small>
+    <small>Adjust the speed to accelerate the simulation.</small>
   </div>
 </section>
 
@@ -408,7 +388,6 @@ body.pump-only .iv-area{min-height:690px}
   <div class="pump-top">
     <div class="pump-brand">
       <span>IV INFUSION PUMP</span>
-      <span class="pump-sju">SJU</span>
     </div>
     <div>
       <button id="exitPumpOnly" class="exit">EXIT</button>
@@ -472,6 +451,9 @@ body.pump-only .iv-area{min-height:690px}
         <button id="selectVtbi">VTBI</button>
         <button id="selectTime">TIME</button>
       </div>
+      <div style="font-size:.72rem;color:var(--gray);text-align:center;margin-top:4px">
+        TIME is entered in total minutes (e.g. 4 hr 30 min = 270)
+      </div>
 
       <div class="keypad">
         <button class="key" data-key="1">1</button><button class="key" data-key="2">2</button><button class="key" data-key="3">3</button>
@@ -487,48 +469,6 @@ body.pump-only .iv-area{min-height:690px}
       </div>
     </div>
 
-    <div class="iv-area" id="ivVisual">
-
-      <div class="iv-stand">
-        <div class="iv-hook"></div>
-        <div class="iv-pole"></div>
-        <div class="iv-base"></div>
-      </div>
-
-      <div class="bag-column">
-
-        <div class="bag">
-          <div class="bag-neck"></div>
-          <div class="bag-hook"></div>
-          <div class="fluid" id="fluid"></div>
-          <div class="bag-label">
-            <span class="sju-small">SJU</span><br>
-            <span id="bagFluidLabel">500</span> mL<br>
-            <small>0.9% NaCl</small>
-          </div>
-          <div class="scale">
-            <span>500</span><span>400</span><span>300</span><span>200</span><span>100</span>
-          </div>
-          <div class="port"></div>
-        </div>
-
-        <div class="tubing"></div>
-
-        <div class="drip" id="dripChamber">
-          <div class="drip-fluid" id="dripFluid"></div>
-          <div class="drop"></div>
-          <div class="drop drop2"></div>
-        </div>
-        <div class="drip-note">DRIP CHAMBER</div>
-
-        <div class="bag-remaining">
-          BAG REMAINING
-          <strong><span id="remaining">500.0</span> mL</strong>
-        </div>
-
-      </div>
-    </div>
-
   </div>
 
   <div class="run-banner">
@@ -539,6 +479,46 @@ body.pump-only .iv-area{min-height:690px}
     </div>
   </div>
 
+</section>
+
+<section class="iv-panel">
+  <div class="iv-area" id="ivVisual">
+
+    <div class="iv-stand">
+      <div class="iv-hook"></div>
+      <div class="iv-pole"></div>
+      <div class="iv-base"></div>
+    </div>
+
+    <div class="bag-column">
+
+      <div class="bag">
+        <div class="bag-neck"></div>
+        <div class="bag-hook"></div>
+        <div class="fluid" id="fluid"></div>
+        <div class="bag-label">
+          <span id="bagFluidLabel">500</span> mL<br>
+          <small>0.9% NaCl</small>
+        </div>
+        <div class="port"></div>
+      </div>
+
+      <div class="tubing"></div>
+
+      <div class="drip" id="dripChamber">
+        <div class="drip-fluid" id="dripFluid"></div>
+        <div class="drop"></div>
+        <div class="drop drop2"></div>
+      </div>
+      <div class="drip-note">DRIP CHAMBER</div>
+
+      <div class="bag-remaining">
+        BAG REMAINING
+        <strong><span id="remaining">500.0</span> mL</strong>
+      </div>
+
+    </div>
+  </div>
 </section>
 </div>
 </div>
@@ -551,13 +531,21 @@ let mode="practice",selected="rate",rateRevealed=false;
 let rate=125,vtbi=500,time=14400;
 let running=false,elapsed=0,last=null,animation=null;
 
+
 function randomChoice(a){return a[Math.floor(Math.random()*a.length)]}
 
 function generateScenario(){
-  const volume=25*(Math.floor(Math.random()*20)+1);
+  const volume=25*(Math.floor(Math.random()*40)+1); // 25 to 1000 mL, step 25
   let minutes;
-  if(volume<=100) minutes=15*(Math.floor(Math.random()*4)+1);
-  else {const c=[];for(let t=90;t<=360;t+=30)c.push(t);minutes=randomChoice(c)}
+  if(volume<=100){
+    minutes=15*(Math.floor(Math.random()*4)+1); // 15, 30, 45, 60
+  } else if(volume<=500){
+    const c=[];for(let t=90;t<=360;t+=15)c.push(t); // 1.5–6 hr, step 15 min
+    minutes=randomChoice(c);
+  } else {
+    const c=[];for(let t=360;t<=720;t+=30)c.push(t); // 6–12 hr, step 30 min
+    minutes=randomChoice(c);
+  }
   const t=minutes*60,h=Math.floor(minutes/60),m=minutes%60;
   let text=h===0?`${m} minutes`:m===0?`${h} hour${h===1?"":"s"}`:`${h} hour${h===1?"":"s"} and ${m} minutes`;
   return {volume,time:t,text:`Infuse ${volume} mL over ${text}.`}
@@ -567,11 +555,6 @@ function formatTime(sec){
   sec=Math.max(0,Math.round(sec));
   const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;
   return [h,m,s].map(x=>String(x).padStart(2,"0")).join(":")
-}
-
-function bagScale(v){
-  const min=Math.log(25),max=Math.log(1000),x=Math.max(25,Math.min(1000,v));
-  return (Math.log(x)-min)/(max-min)
 }
 
 function clearPumpError(){
@@ -589,24 +572,26 @@ function setMessage(t,c=""){
 }
 
 function updateVisual(){
-  const bag=mode==="practice"&&currentScenario?currentScenario.volume:(parseFloat($("freeBag").value)||1000);
-  const infused=Math.min(vtbi,rate*elapsed/3600);
-  const remaining=Math.max(0,bag-infused);
-  const ratio=bag>0?remaining/bag:0;
+  // In Practice Mode, the bag represents the ordered volume.
+  // In Free Program Mode, use the VTBI programmed directly on the pump.
+  const bag = mode==="practice" && currentScenario ? currentScenario.volume : (vtbi || 0);
+  const infused = Math.min(vtbi || 0, rate * elapsed / 3600);
+  const remaining = Math.max(0, bag - infused);
+  const ratio = bag > 0 ? remaining / bag : 0;
 
-  $("fluid").style.height=Math.max(0,ratio*100)+"%";
-  $("bagFluidLabel").textContent=bag;
-  $("remaining").textContent=remaining.toFixed(1);
+  $("fluid").style.height = Math.max(0, ratio * 100) + "%";
+  $("bagFluidLabel").textContent = bag > 0 ? bag : "---";
+  $("remaining").textContent = remaining.toFixed(1);
 
-  $("dripFluid").style.height=running?"60%":"45%";
-  $("dripChamber").classList.toggle("running",running);
+  $("dripFluid").style.height = running ? "60%" : "45%";
+  $("dripChamber").classList.toggle("running", running);
 
-  document.querySelector(".iv-area").classList.toggle("running",running);
+  document.querySelector(".iv-area").classList.toggle("running", running);
 
-  $("runBannerTitle").textContent=running?"Infusion running":(rate&&vtbi&&time?"Programming ready":"Ready to program");
-  $("runBannerText").textContent=running
-    ?"Volume, rate, and time align. Infusion is running."
-    :(rate&&vtbi&&time?"Press START when ready.":"Enter compatible volume, rate, and time.");
+  $("runBannerTitle").textContent = running ? "Infusion running" : (rate && vtbi && time ? "Programming ready" : "Ready to program");
+  $("runBannerText").textContent = running
+    ? "Volume, rate, and time align. Infusion is running."
+    : (rate && vtbi && time ? "Press START when ready." : "Enter compatible volume, rate, and time.");
 }
 
 function getSelectedValue(){
@@ -664,7 +649,7 @@ function loadScenario(){
   vtbi=currentScenario.volume;
   time=currentScenario.time;
   rate=currentScenario.volume/(currentScenario.time/3600);
-  elapsed=0;rateRevealed=false;selected="rate";
+  elapsed=0;rateRevealed=false;selected="rate";keypadBuffer=null;
   $("scenarioText").textContent=currentScenario.text;
   $("rateAnswer").value="";
   $("answerMessage").textContent="";
@@ -673,22 +658,28 @@ function loadScenario(){
   setMessage("");render();
 }
 
-function selectField(f){if(running)return;selected=f;render()}
+function selectField(f){if(running)return;selected=f;keypadBuffer=null;render()}
+
+let keypadBuffer=null; // tracks the in-progress typed string for the active field
 
 function keyPress(k){
   if(running)return;
-  let val;
-  if(mode==="practice"&&selected==="rate"&&!rateRevealed)val="";
-  else if(selected==="rate")val=String(rate||"");
-  else if(selected==="vtbi")val=String(vtbi||"");
-  else val=String(Math.round(time/60)||"");
+  // Start a fresh buffer the first time this field is typed into since it was selected/cleared.
+  if(keypadBuffer===null){
+    if(mode==="practice"&&selected==="rate"&&!rateRevealed) keypadBuffer="";
+    else if(selected==="rate") keypadBuffer=rate?String(rate):"";
+    else if(selected==="vtbi") keypadBuffer=vtbi?String(vtbi):"";
+    else keypadBuffer=time?String(Math.round(time/60)):"";
+  }
 
+  let val=keypadBuffer;
   if(k==="back")val=val.slice(0,-1);
   else if(k==="."&&val.includes("."))return;
   else val+=k;
-  if(val===".")val="0.";
-  if(val==="")val="0";
-  const n=parseFloat(val);if(!Number.isFinite(n))return;
+
+  keypadBuffer=val;
+  const forDisplay=val===""||val==="."?"0":val;
+  const n=parseFloat(forDisplay);if(!Number.isFinite(n))return;
   if(selected==="rate")rate=n;else if(selected==="vtbi")vtbi=n;else time=n*60;
   clearPumpError();render();
 }
@@ -717,13 +708,13 @@ function checkRateAnswer(){
   }
   const correct=currentScenario.volume/(currentScenario.time/3600);
   const rounded=Number(correct.toFixed(1));
-  const valid=/^\d+\.\d$/.test(raw)&&Number(raw)===rounded;
+  const valid=Number.isFinite(answer)&&Math.abs(answer-rounded)<1e-9;
   if(valid){
     $("answerMessage").textContent=`✓ Correct! The rate is ${rounded.toFixed(1)} mL/hr.`;
     $("answerMessage").className="message ok";
-    rateRevealed=true;$("programPump").style.display="block";render();
+    rateRevealed=true;keypadBuffer=null;$("programPump").style.display="block";render();
   }else{
-    $("answerMessage").textContent="✗ Not quite. Enter the answer rounded to the nearest tenth (e.g., 125.0).";
+    $("answerMessage").textContent="✗ Not quite. Check your calculation and try again.";
     $("answerMessage").className="message error";$("programPump").style.display="none";
   }
 }
@@ -731,7 +722,7 @@ function checkRateAnswer(){
 function programCorrectRate(){
   if(!currentScenario)return;
   rate=Number((currentScenario.volume/(currentScenario.time/3600)).toFixed(1));
-  vtbi=currentScenario.volume;time=currentScenario.time;elapsed=0;selected="rate";rateRevealed=true;
+  vtbi=currentScenario.volume;time=currentScenario.time;elapsed=0;selected="rate";rateRevealed=true;keypadBuffer=null;
   clearPumpError();render();setMessage("Pump programmed. Press START when ready.","ok");
 }
 
@@ -749,6 +740,11 @@ function validProgram(){
     return false;
   }
   if(mode==="practice"){
+    if(!rateRevealed){
+      setMessage("Check the calculated rate before starting the infusion.","error");
+      showPumpError("ERROR — RATE HAS NOT BEEN CHECKED.");
+      return false;
+    }
     const s=currentScenario;
     const rateOK=Math.abs(rate-s.volume/(s.time/3600))<0.1;
     const vtbiOK=Math.abs(vtbi-s.volume)<0.1;
@@ -804,7 +800,7 @@ function finish(){
 
 function resetPump(){
   if(running)stop(false);
-  clearPumpError();rate=0;vtbi=0;time=0;elapsed=0;selected="rate";
+  clearPumpError();rate=0;vtbi=0;time=0;elapsed=0;selected="rate";keypadBuffer=null;
   if(mode==="practice")rateRevealed=false;
   render();setMessage("Pump reset. Program RATE, VTBI, and TIME before starting.");
 }
@@ -816,10 +812,10 @@ function setMode(m){
   $("freeMode").classList.toggle("active",m==="free");
   $("scenarioArea").style.display=m==="practice"?"block":"none";
   $("answerArea").style.display=m==="practice"?"block":"none";
-  $("freeArea").style.display=m==="free"?"block":"none";
+  $("pumpOnlyArea").style.display=m==="free"?"flex":"none";
   if(m==="practice")loadScenario();
   else{
-    rate=0;vtbi=500;time=14400;elapsed=0;rateRevealed=false;selected="rate";
+    rate=0;vtbi=500;time=14400;elapsed=0;rateRevealed=false;selected="rate";keypadBuffer=null;
     render();setMessage("Free Program mode: enter compatible RATE, VTBI, and TIME.");
   }
 }
@@ -843,7 +839,6 @@ $("practiceMode").onclick=()=>setMode("practice");
 $("freeMode").onclick=()=>setMode("free");
 $("newScenario").onclick=loadScenario;
 $("speed").oninput=()=>$("speedValue").textContent=$("speed").value;
-$("freeBag").oninput=()=>{if(!running)render()};
 $("pumpOnly").onclick=()=>{document.body.classList.add("pump-only");window.scrollTo(0,0)};
 $("exitPumpOnly").onclick=()=>document.body.classList.remove("pump-only");
 
