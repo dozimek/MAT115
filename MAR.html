@@ -134,6 +134,18 @@
     }
 
 
+
+    .logout-btn {
+      padding: 6px 9px;
+      border: 1px solid rgba(255,255,255,.55);
+      background: rgba(255,255,255,.10);
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,.22); }
+    .logout-btn:focus { outline: 2px solid rgba(255,255,255,.55); outline-offset: 2px; }
+
     .course-title {
       margin-top: 3px;
       font-size: 13px;
@@ -176,9 +188,7 @@
       text-align: right;
     }
 
-    .preview-mode .preview-return {
-      display: block;
-    }
+
 
     .preview-return button {
       background: var(--sju-crimson);
@@ -475,13 +485,9 @@
           <input id="studentName" type="text" placeholder="Enter your name" aria-label="Student nurse name">
         </label>
         <span>❔ Help</span>
-        <span>⏻ Log Out</span>
+        <button type="button" id="logoutBtn" class="logout-btn">⏻ Log Out</button>
       </div>
     </header>
-
-    <div class="preview-return" id="previewReturn">
-      <button type="button" id="backToEdit">← Back to Editing</button>
-    </div>
 
     <section>
       <h2 class="section-title">Patient Information</h2>
@@ -646,7 +652,7 @@
         setPreviewMode(true);
       });
 
-      document.getElementById('backToEdit').addEventListener('click', () => {
+      document.getElementById('logoutBtn').addEventListener('click', () => {
         setPreviewMode(false);
       });
 
