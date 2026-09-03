@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SJU IV Pump Simulator</title>
+<style>
+:root{
+  --crimson:#9E1B32;
+  --crimson-dark:#7f1428;
+  --crimson-light:#c94a61;
+  --gray:#6C6F70;
+  --gray-dark:#4e5254;
+  --gray-light:#e7e8e8;
+  --screen:#d9e8f4;
+  --green:#2e8b57;
+  --green-light:#dff3e6;
+  --red:#a9473f;
+  --text:#263038;
+  --pump:#d9d5cc;
+  --pump-edge:#918e87;
+  --key:#464e53;
+  --key-border:#697278;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:linear-gradient(135deg,#f1f2f2,#d9dbdb);
+  color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;
+}
+.app{max-width:1450px;margin:auto;padding:18px}
+.header{
+  display:flex;align-items:center;gap:18px;
+  padding:8px 10px 14px;
+  border-bottom:4px solid var(--crimson);
+  margin-bottom:16px;
+}
+.sju-mark{
+  color:var(--crimson);
+  font-weight:900;font-size:2rem;letter-spacing:-.08em;
+  border-right:2px solid var(--crimson);padding-right:18px;
+}
+.header h1{margin:0;color:#172c3a;font-size:2rem}
+.header p{margin:3px 0 0;color:var(--gray)}
+
+.layout{
+  display:grid;
+  grid-template-columns:400px 1fr;
+  gap:18px;
+  align-items:stretch;
+}
+
+.card{
+  background:rgba(255,255,255,.96);
+  border:1px solid #d0d1d1;
+  border-radius:14px;
+  padding:18px;
+  box-shadow:0 4px 18px rgba(0,0,0,.08);
+}
+
+.mode-buttons{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px
+}
+.mode-buttons button{
+  border:0;border-radius:8px;padding:12px;font-weight:800;
+  background:var(--gray);color:white;cursor:pointer
+}
+.mode-buttons button.active{background:var(--crimson)}
+
+.order{
+  background:#fff4f6;border:1px solid #e7aab6;
+  border-left:5px solid var(--crimson);
+  padding:13px;border-radius:8px;margin-bottom:14px;line-height:1.45
+}
+.order strong{color:var(--crimson)}
+
+.field{margin:12px 0}
+label{display:block;font-weight:800;margin-bottom:6px}
+input[type=number]{
+  width:100%;padding:10px;border:1px solid #aeb9c2;
+  border-radius:8px;font-size:1rem
+}
+.inline-input{display:grid;grid-template-columns:1fr auto;gap:7px}
+button{font-family:inherit}
+.action{
+  border:0;border-radius:8px;padding:10px 13px;font-weight:800;cursor:pointer
+}
+.check{background:var(--crimson);color:white}
+.program{background:var(--green);color:white;width:100%}
+
+.message{min-height:24px;margin-top:9px;font-weight:800}
+.ok{color:var(--green)}
+.error{color:var(--crimson)}
+
+.scenario-controls{margin-bottom:12px}
+.scenario-controls button{
+  width:100%;border:1px solid #bbb;background:#f5f6f6;
+  padding:9px;border-radius:7px;font-weight:800;cursor:pointer
+}
+
+.free-note{
+  color:var(--gray);font-size:.86rem;line-height:1.4;margin:12px 0
+}
+.controls-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.start-side{background:var(--green);color:white}
+.stop-side{background:var(--crimson);color:white}
+.reset-side{background:var(--gray-light);color:#303638}
+.project{background:var(--gray-dark);color:white;width:100%}
+
+.speed{
+  border-top:1px solid #ddd;margin-top:16px;padding-top:13px
+}
+.speed-row{display:flex;gap:9px;align-items:center}
+.speed-row input{flex:1}
+
+.pump{
+  position:relative;
+  background:linear-gradient(145deg,#e2dfd7,#cbc7be);
+  border:2px solid var(--pump-edge);
+  border-radius:20px;
+  padding:20px 20px 24px;
+  box-shadow:0 7px 25px rgba(0,0,0,.18),inset 0 0 0 2px rgba(255,255,255,.45);
+  min-height:720px;
+}
+.pump:after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:7px;
+  background:var(--crimson);border-radius:0 0 18px 18px
+}
+.pump-top{
+  display:flex;justify-content:space-between;align-items:center;
+  color:#30363a;font-weight:900;letter-spacing:.06em;margin-bottom:12px
+}
+.pump-brand{
+  display:flex;align-items:center;gap:12px
+}
+.pump-sju{
+  color:var(--crimson);font-size:1.55rem;font-weight:900
+}
+.status{
+  display:flex;align-items:center;gap:7px;
+  background:#f4f5f4;border:1px solid #aaa;border-radius:18px;
+  padding:7px 12px;font-size:.78rem
+}
+.status-dot{width:11px;height:11px;border-radius:50%;background:#888}
+.status-dot.running{background:#65c467;box-shadow:0 0 10px #65c467}
+.exit{display:none;margin-right:10px;border:0;border-radius:6px;padding:6px 9px;background:var(--gray-dark);color:#fff;font-weight:800;cursor:pointer}
+
+.pump-body{
+  display:grid;
+  grid-template-columns:minmax(310px,1fr) 300px;
+  gap:18px;
+  align-items:start;
+}
+
+.screen{
+  background:var(--screen);color:#17252e;border-radius:7px;border:7px solid #343b40;
+  padding:18px;font-family:"Courier New",monospace;
+  box-shadow:inset 0 0 15px rgba(60,90,110,.12),0 3px 7px rgba(0,0,0,.22)
+}
+.display-header{display:flex;justify-content:space-between;font-size:.8rem;font-weight:900}
+.screen-rate{text-align:center;font-size:clamp(3rem,6vw,5.5rem);font-weight:900;margin:8px 0 0}
+.screen-unit{text-align:center;font-size:1.05rem;font-weight:800}
+.screen-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  border-top:2px solid rgba(21,36,21,.25);margin-top:16px;padding-top:12px
+}
+.screen-cell{background:rgba(255,255,255,.25);padding:8px;border-radius:6px}
+.screen-label{font-size:.7rem;opacity:.7}
+.screen-value{font-size:1.12rem;font-weight:800}
+.progress-wrap{height:15px;background:#273028;border-radius:8px;overflow:hidden;margin:16px 0 5px}
+.progress{height:100%;width:100%;background:var(--crimson);transition:width .1s linear}
+.progress-label{text-align:center;font-size:.7rem;font-weight:700}
+.pump-error{
+  display:none;margin:12px auto 0;padding:8px 12px;text-align:center;
+  font-family:Arial,Helvetica,sans-serif;font-size:.88rem;font-weight:900;
+  color:#8f2f2a;background:#f6d9d7;border:1px solid #c77b76;border-radius:6px
+}
+.pump-error.show{display:block}
+
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.key{
+  padding:13px 5px;border-radius:6px;border:1px solid var(--key-border);
+  background:var(--key);color:#fff;font-size:1.05rem;font-weight:900;cursor:pointer;
+  box-shadow:0 2px 2px rgba(0,0,0,.25)
+}
+.key:active{transform:scale(.97)}
+.field-select{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}
+.field-select button{
+  padding:9px 4px;border:1px solid #888984;background:#c4c2bc;
+  color:#252c30;border-radius:5px;font-weight:900;cursor:pointer
+}
+.field-select button.active{background:var(--crimson);border-color:var(--crimson-dark);color:#fff}
+.pump-controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.pump-control{
+  padding:12px 8px;border-radius:6px;border:1px solid #858781;
+  color:#fff;font-weight:900;cursor:pointer
+}
+.pump-control.start{background:var(--green)}
+.pump-control.stop{background:var(--crimson)}
+.pump-control.reset{background:var(--gray)}
+.pump-control:disabled{opacity:.45;cursor:not-allowed}
+
+/* IV VISUAL */
+.iv-area{
+  min-height:610px;
+  display:flex;justify-content:center;align-items:flex-start;
+  gap:28px;padding:8px 12px 0;
+}
+.iv-stand{position:relative;width:42px;height:600px}
+.iv-pole{position:absolute;top:35px;bottom:42px;left:18px;width:6px;background:linear-gradient(90deg,#777,#ddd,#777);border-radius:4px}
+.iv-hook{position:absolute;top:10px;left:8px;width:28px;height:45px;border-left:5px solid #777;border-top:5px solid #777;border-radius:12px 0 0 0}
+.iv-base{position:absolute;bottom:20px;left:-15px;width:72px;height:12px;background:#777;border-radius:50%}
+.bag-column{position:relative;width:190px;padding-top:45px}
+.bag{
+  width:155px;height:285px;margin:auto;position:relative;
+  border:4px solid #72818a;border-radius:16px 16px 28px 28px;
+  overflow:visible;background:linear-gradient(120deg,rgba(255,255,255,.75),rgba(210,229,237,.45));
+  box-shadow:inset 8px 0 12px rgba(255,255,255,.5),3px 5px 12px rgba(0,0,0,.18);
+  transition:height .25s
+}
+.bag-neck{
+  position:absolute;top:-35px;left:52px;width:47px;height:38px;
+  border:4px solid #72818a;border-bottom:0;border-radius:9px 9px 0 0;
+  background:#dce5e8
+}
+.bag-hook{
+  position:absolute;top:-57px;left:66px;width:20px;height:27px;
+  border:4px solid #72818a;border-bottom:0;border-radius:10px 10px 0 0
+}
+.fluid{
+  position:absolute;bottom:0;left:0;right:0;height:100%;
+  background:linear-gradient(180deg,rgba(92,168,213,.55),rgba(57,130,182,.78));
+  border-radius:0 0 22px 22px;transition:height .1s linear;overflow:hidden
+}
+.fluid:after{
+  content:"";position:absolute;left:0;right:0;top:0;height:2px;background:rgba(255,255,255,.65)
+}
+.bag-label{
+  position:absolute;top:45%;left:0;right:0;text-align:center;
+  font-weight:900;color:#21465b;z-index:3;text-shadow:0 1px 2px white
+}
+.bag-label .sju-small{color:var(--crimson);font-size:1.15rem}
+.scale{
+  position:absolute;right:-31px;top:20px;height:235px;width:25px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  font-size:.63rem;color:#53616a;font-weight:700
+}
+.scale:before{
+  content:"";position:absolute;right:1px;top:0;bottom:0;width:2px;background:#53616a
+}
+.scale span{position:relative;background:rgba(255,255,255,.55);padding-left:2px}
+.scale span:before{content:"";position:absolute;right:0;top:50%;width:9px;height:1px;background:#53616a;transform:translateY(-50%)}
+.port{
+  position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);
+  width:34px;height:24px;border:4px solid #72818a;border-top:0;border-radius:0 0 8px 8px;background:#dce5e8
+}
+.tubing{
+  width:10px;height:120px;margin:0 auto;background:rgba(190,220,232,.6);
+  border:2px solid #71808b;border-top:0;border-radius:0 0 7px 7px;
+  position:relative
+}
+.drip{
+  width:60px;height:125px;margin:0 auto;position:relative;
+  border:4px solid #71808b;border-radius:12px 12px 18px 18px;
+  background:rgba(220,240,247,.55);overflow:hidden
+}
+.drip-fluid{position:absolute;bottom:0;left:0;right:0;height:55%;background:rgba(83,156,202,.5);transition:height .15s}
+.drop{
+  position:absolute;width:8px;height:12px;border-radius:60% 60% 60% 0;
+  background:#5aadd7;transform:rotate(-45deg);left:26px;top:15px;
+  opacity:0
+}
+.running .drop{animation:dropFall .75s infinite}
+.running .drop2{animation-delay:.35s}
+@keyframes dropFall{
+  0%{top:8px;opacity:0;transform:translateY(0) rotate(-45deg)}
+  15%{opacity:1}
+  85%{opacity:1}
+  100%{top:83px;opacity:0;transform:translateY(0) rotate(-45deg)}
+}
+.drip-note{text-align:center;font-size:.72rem;color:#59636a;font-weight:800;margin-top:5px}
+.bag-remaining{
+  margin:15px auto 0;max-width:190px;background:#fff;border:1px solid #d1d5d6;
+  border-radius:8px;padding:8px;text-align:center;font-size:.82rem
+}
+.bag-remaining strong{display:block;color:#172c3a;font-size:1.05rem}
+.run-banner{
+  display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #d3d7d8;
+  border-radius:10px;padding:10px 14px;margin-top:10px;box-shadow:0 2px 7px rgba(0,0,0,.07)
+}
+.check-circle{
+  width:35px;height:35px;border-radius:50%;background:var(--green);color:white;
+  display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:900
+}
+.run-banner strong{display:block}
+.run-banner span{font-size:.78rem;color:var(--gray)}
+
+.screen-editor{display:none;text-align:center;margin-top:8px}
+.screen-editor input{max-width:280px;text-align:center;font-family:"Courier New",monospace;font-size:1.8rem;font-weight:900;background:transparent;border:2px solid #7898ad;color:#17252e}
+.time-editor{display:none;align-items:center;justify-content:center;gap:8px}
+.time-part{width:90px;text-align:center}
+
+body.pump-only{background:#bfc0bd}
+body.pump-only .app{max-width:1250px;min-height:100vh;display:flex;flex-direction:column;justify-content:center}
+body.pump-only .header,body.pump-only .layout>.card{display:none}
+body.pump-only .layout{display:block}
+body.pump-only .pump{min-height:94vh}
+body.pump-only .exit{display:inline-block}
+body.pump-only .pump-body{grid-template-columns:1fr 360px;align-items:center}
+body.pump-only .screen{max-width:900px;margin:auto}
+body.pump-only .screen-rate{font-size:clamp(4rem,9vw,7rem)}
+body.pump-only .screen-value{font-size:1.35rem}
+body.pump-only .iv-area{min-height:690px}
+
+@media(max-width:1050px){
+  .layout{grid-template-columns:330px 1fr}
+  .pump-body{grid-template-columns:1fr}
+  .iv-area{min-height:auto;order:2}
+}
+@media(max-width:760px){
+  .layout{grid-template-columns:1fr}
+  .app{padding:10px}
+  .iv-area{transform:scale(.9);transform-origin:top center;margin-bottom:-50px}
+  .pump{min-height:auto}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<header class="header">
+  <div class="sju-mark">SJU</div>
+  <div>
+    <h1>IV Pump Simulator</h1>
+    <p>Practice programming an IV infusion pump.</p>
+  </div>
+</header>
+
+<div class="layout">
+
+<section class="card">
+  <div class="mode-buttons">
+    <button id="practiceMode" class="active">⚕ Practice</button>
+    <button id="freeMode">✎ Free Program</button>
+  </div>
+
+  <div id="scenarioArea">
+    <div class="order">
+      <strong>IV Order</strong><br>
+      <span id="scenarioText">Infuse 500 mL over 4 hours.</span>
+    </div>
+    <div class="scenario-controls">
+      <button id="newScenario">↻ Generate New Problem</button>
+    </div>
+  </div>
+
+  <div id="answerArea">
+    <div class="field">
+      <label>Your calculated rate (mL/hr)</label>
+      <div class="inline-input">
+        <input id="rateAnswer" type="number" min="0" step="0.1" placeholder="Enter mL/hr">
+        <button class="action check" id="checkAnswer">CHECK ANSWER</button>
+      </div>
+    </div>
+    <div id="answerMessage" class="message"></div>
+    <button class="action program" id="programPump" style="display:none">PROGRAM PUMP</button>
+  </div>
+
+  <div id="freeArea" style="display:none">
+    <div class="field">
+      <label>IV bag volume (mL)</label>
+      <input id="freeBag" type="number" min="1" step="1" value="1000">
+    </div>
+  </div>
+
+  <div class="free-note">
+    Select RATE, VTBI, or TIME on the pump and use the keypad. In Free Program mode,
+    you can also edit the displayed value directly on the pump screen.
+  </div>
+
+  <div class="controls-row">
+    <button class="action start-side" id="practiceStart">▶ START</button>
+    <button class="action stop-side" id="practiceStop" disabled>■ STOP</button>
+    <button class="action reset-side" id="clear">↻ RESET</button>
+  </div>
+
+  <div class="controls-row">
+    <button class="action project" id="pumpOnly">▣ PUMP SCREEN ONLY</button>
+  </div>
+
+  <div id="message" class="message"></div>
+
+  <div class="speed">
+    <label>Simulation speed</label>
+    <div class="speed-row">
+      <input id="speed" type="range" min="1" max="120" value="30">
+      <strong><span id="speedValue">30</span>×</strong>
+    </div>
+    <small>30× makes a 4-hour infusion take about 8 minutes.</small>
+  </div>
+</section>
+
+<section class="pump">
+
+  <div class="pump-top">
+    <div class="pump-brand">
+      <span>IV INFUSION PUMP</span>
+      <span class="pump-sju">SJU</span>
+    </div>
+    <div>
+      <button id="exitPumpOnly" class="exit">EXIT</button>
+      <span class="status">
+        <span id="dot" class="status-dot"></span>
+        <span id="status">STOPPED</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="pump-body">
+
+    <div>
+      <div class="screen">
+
+        <div class="display-header">
+          <span id="selectedLabel">RATE</span>
+          <span id="programStatus">PROGRAM</span>
+        </div>
+
+        <div id="screenEditor" class="screen-editor">
+          <input id="screenInput" type="number" inputmode="decimal" step="0.1">
+          <div id="timeEditor" class="time-editor">
+            <input id="hoursInput" class="time-part" type="number" min="0" max="999" step="1" placeholder="HH">
+            <span style="font-size:2rem;font-weight:900">:</span>
+            <input id="minutesInput" class="time-part" type="number" min="0" max="59" step="1" placeholder="MM">
+          </div>
+        </div>
+
+        <div class="screen-rate" id="mainDisplay">---</div>
+        <div class="screen-unit" id="mainUnit">mL/hr</div>
+        <div id="rateHiddenNote" style="text-align:center;font-size:.72rem;opacity:.7;margin-top:5px">RATE NOT YET CHECKED</div>
+
+        <div class="screen-grid">
+          <div class="screen-cell">
+            <div class="screen-label">RATE</div>
+            <div class="screen-value"><span id="rateDisplay">---</span> mL/hr</div>
+          </div>
+          <div class="screen-cell">
+            <div class="screen-label">VTBI</div>
+            <div class="screen-value"><span id="vtbiDisplay">500</span> mL</div>
+          </div>
+          <div class="screen-cell">
+            <div class="screen-label">TIME</div>
+            <div class="screen-value" id="timeDisplay">04:00:00</div>
+          </div>
+          <div class="screen-cell">
+            <div class="screen-label">VOLUME INFUSED</div>
+            <div class="screen-value"><span id="infused">0.0</span> mL</div>
+          </div>
+        </div>
+
+        <div class="progress-wrap"><div class="progress" id="progress"></div></div>
+        <div class="progress-label">INFUSION PROGRESS</div>
+
+        <div id="pumpError" class="pump-error">ERROR — VOLUME, RATE, AND TIME DO NOT ALIGN.</div>
+      </div>
+
+      <div class="field-select">
+        <button id="selectRate" class="active">RATE</button>
+        <button id="selectVtbi">VTBI</button>
+        <button id="selectTime">TIME</button>
+      </div>
+
+      <div class="keypad">
+        <button class="key" data-key="1">1</button><button class="key" data-key="2">2</button><button class="key" data-key="3">3</button>
+        <button class="key" data-key="4">4</button><button class="key" data-key="5">5</button><button class="key" data-key="6">6</button>
+        <button class="key" data-key="7">7</button><button class="key" data-key="8">8</button><button class="key" data-key="9">9</button>
+        <button class="key" data-key=".">.</button><button class="key" data-key="0">0</button><button class="key" data-key="back">⌫</button>
+      </div>
+
+      <div class="pump-controls">
+        <button id="pumpStart" class="pump-control start">▶ START</button>
+        <button id="pumpStop" class="pump-control stop" disabled>■ STOP</button>
+        <button id="pumpReset" class="pump-control reset">↻ RESET</button>
+      </div>
+    </div>
+
+    <div class="iv-area" id="ivVisual">
+
+      <div class="iv-stand">
+        <div class="iv-hook"></div>
+        <div class="iv-pole"></div>
+        <div class="iv-base"></div>
+      </div>
+
+      <div class="bag-column">
+
+        <div class="bag">
+          <div class="bag-neck"></div>
+          <div class="bag-hook"></div>
+          <div class="fluid" id="fluid"></div>
+          <div class="bag-label">
+            <span class="sju-small">SJU</span><br>
+            <span id="bagFluidLabel">500</span> mL<br>
+            <small>0.9% NaCl</small>
+          </div>
+          <div class="scale">
+            <span>500</span><span>400</span><span>300</span><span>200</span><span>100</span>
+          </div>
+          <div class="port"></div>
+        </div>
+
+        <div class="tubing"></div>
+
+        <div class="drip" id="dripChamber">
+          <div class="drip-fluid" id="dripFluid"></div>
+          <div class="drop"></div>
+          <div class="drop drop2"></div>
+        </div>
+        <div class="drip-note">DRIP CHAMBER</div>
+
+        <div class="bag-remaining">
+          BAG REMAINING
+          <strong><span id="remaining">500.0</span> mL</strong>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="run-banner">
+    <div class="check-circle" id="runIcon">✓</div>
+    <div>
+      <strong id="runBannerTitle">Ready to program</strong>
+      <span id="runBannerText">Enter compatible volume, rate, and time.</span>
+    </div>
+  </div>
+
+</section>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+
+let currentScenario=null;
+let mode="practice",selected="rate",rateRevealed=false;
+let rate=125,vtbi=500,time=14400;
+let running=false,elapsed=0,last=null,animation=null;
+
+function randomChoice(a){return a[Math.floor(Math.random()*a.length)]}
+
+function generateScenario(){
+  const volume=25*(Math.floor(Math.random()*20)+1);
+  let minutes;
+  if(volume<=100) minutes=15*(Math.floor(Math.random()*4)+1);
+  else {const c=[];for(let t=90;t<=360;t+=30)c.push(t);minutes=randomChoice(c)}
+  const t=minutes*60,h=Math.floor(minutes/60),m=minutes%60;
+  let text=h===0?`${m} minutes`:m===0?`${h} hour${h===1?"":"s"}`:`${h} hour${h===1?"":"s"} and ${m} minutes`;
+  return {volume,time:t,text:`Infuse ${volume} mL over ${text}.`}
+}
+
+function formatTime(sec){
+  sec=Math.max(0,Math.round(sec));
+  const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;
+  return [h,m,s].map(x=>String(x).padStart(2,"0")).join(":")
+}
+
+function bagScale(v){
+  const min=Math.log(25),max=Math.log(1000),x=Math.max(25,Math.min(1000,v));
+  return (Math.log(x)-min)/(max-min)
+}
+
+function clearPumpError(){
+  $("pumpError").classList.remove("show");
+  $("pumpError").textContent="";
+}
+function showPumpError(msg){
+  $("pumpError").textContent=msg;
+  $("pumpError").classList.add("show");
+}
+
+function setMessage(t,c=""){
+  $("message").textContent=t;
+  $("message").className="message "+c;
+}
+
+function updateVisual(){
+  const bag=mode==="practice"&&currentScenario?currentScenario.volume:(parseFloat($("freeBag").value)||1000);
+  const infused=Math.min(vtbi,rate*elapsed/3600);
+  const remaining=Math.max(0,bag-infused);
+  const ratio=bag>0?remaining/bag:0;
+
+  $("fluid").style.height=Math.max(0,ratio*100)+"%";
+  $("bagFluidLabel").textContent=bag;
+  $("remaining").textContent=remaining.toFixed(1);
+
+  $("dripFluid").style.height=running?"60%":"45%";
+  $("dripChamber").classList.toggle("running",running);
+
+  document.querySelector(".iv-area").classList.toggle("running",running);
+
+  $("runBannerTitle").textContent=running?"Infusion running":(rate&&vtbi&&time?"Programming ready":"Ready to program");
+  $("runBannerText").textContent=running
+    ?"Volume, rate, and time align. Infusion is running."
+    :(rate&&vtbi&&time?"Press START when ready.":"Enter compatible volume, rate, and time.");
+}
+
+function getSelectedValue(){
+  if(selected==="rate")return rate;
+  if(selected==="vtbi")return vtbi;
+  return time;
+}
+
+function displaySelectedValue(){
+  if(selected==="rate")return mode==="practice"&&!rateRevealed?"---":(rate?Number(rate.toFixed(1)):"---");
+  if(selected==="vtbi")return vtbi?Number(vtbi.toFixed(1)):"---";
+  return formatTime(time);
+}
+
+function updateDirectEditor(){
+  const allow=mode==="free"&&!running;
+  $("screenEditor").style.display=allow?"block":"none";
+  $("timeEditor").style.display=allow&&selected==="time"?"flex":"none";
+  $("screenInput").style.display=allow&&selected!=="time"?"block":"none";
+  if(allow){
+    if(selected==="time"){
+      const tm=Math.floor(time/60);
+      $("hoursInput").value=Math.floor(tm/60);
+      $("minutesInput").value=tm%60;
+    }else{
+      $("screenInput").value=getSelectedValue()||"";
+      $("screenInput").placeholder=selected==="rate"?"mL/hr":"mL";
+    }
+  }
+}
+
+function render(){
+  $("rateDisplay").textContent=mode==="practice"&&!rateRevealed?"---":(rate?Number(rate.toFixed(1)):"---");
+  $("vtbiDisplay").textContent=vtbi?Number(vtbi.toFixed(1)):"---";
+  $("timeDisplay").textContent=time?formatTime(time):"--:--:--";
+  $("mainDisplay").textContent=displaySelectedValue();
+  $("mainUnit").textContent=selected==="rate"?"mL/hr":selected==="vtbi"?"mL":"HH:MM:SS";
+  $("selectedLabel").textContent=selected.toUpperCase();
+  $("rateHiddenNote").style.display=mode==="practice"&&!rateRevealed?"block":"none";
+
+  const infused=Math.min(vtbi,rate*elapsed/3600);
+  $("infused").textContent=infused.toFixed(1);
+  $("progress").style.width=(vtbi?Math.max(0,100-infused/vtbi*100):100)+"%";
+
+  document.querySelectorAll(".field-select button").forEach(b=>b.classList.remove("active"));
+  $("select"+selected.charAt(0).toUpperCase()+selected.slice(1)).classList.add("active");
+
+  updateDirectEditor();
+  updateVisual();
+}
+
+function loadScenario(){
+  stop(false);clearPumpError();
+  currentScenario=generateScenario();
+  vtbi=currentScenario.volume;
+  time=currentScenario.time;
+  rate=currentScenario.volume/(currentScenario.time/3600);
+  elapsed=0;rateRevealed=false;selected="rate";
+  $("scenarioText").textContent=currentScenario.text;
+  $("rateAnswer").value="";
+  $("answerMessage").textContent="";
+  $("answerMessage").className="message";
+  $("programPump").style.display="none";
+  setMessage("");render();
+}
+
+function selectField(f){if(running)return;selected=f;render()}
+
+function keyPress(k){
+  if(running)return;
+  let val;
+  if(mode==="practice"&&selected==="rate"&&!rateRevealed)val="";
+  else if(selected==="rate")val=String(rate||"");
+  else if(selected==="vtbi")val=String(vtbi||"");
+  else val=String(Math.round(time/60)||"");
+
+  if(k==="back")val=val.slice(0,-1);
+  else if(k==="."&&val.includes("."))return;
+  else val+=k;
+  if(val===".")val="0.";
+  if(val==="")val="0";
+  const n=parseFloat(val);if(!Number.isFinite(n))return;
+  if(selected==="rate")rate=n;else if(selected==="vtbi")vtbi=n;else time=n*60;
+  clearPumpError();render();
+}
+
+function updateFromScreenInput(){
+  if(mode!=="free"||running||selected==="time")return;
+  const n=parseFloat($("screenInput").value);if(!Number.isFinite(n))return;
+  if(selected==="rate")rate=n;else vtbi=n;
+  clearPumpError();render();
+}
+
+function updateTimeFromScreen(){
+  if(mode!=="free"||running||selected!=="time")return;
+  let h=parseInt($("hoursInput").value,10),m=parseInt($("minutesInput").value,10);
+  if(!Number.isFinite(h))h=0;if(!Number.isFinite(m))m=0;
+  h=Math.max(0,Math.min(999,h));m=Math.max(0,Math.min(59,m));
+  time=(h*60+m)*60;clearPumpError();render();
+}
+
+function checkRateAnswer(){
+  if(!currentScenario)return;
+  const raw=$("rateAnswer").value.trim(),answer=parseFloat(raw);
+  if(!Number.isFinite(answer)||answer<=0){
+    $("answerMessage").textContent="Enter a positive rate rounded to the nearest tenth.";
+    $("answerMessage").className="message error";return;
+  }
+  const correct=currentScenario.volume/(currentScenario.time/3600);
+  const rounded=Number(correct.toFixed(1));
+  const valid=/^\d+\.\d$/.test(raw)&&Number(raw)===rounded;
+  if(valid){
+    $("answerMessage").textContent=`✓ Correct! The rate is ${rounded.toFixed(1)} mL/hr.`;
+    $("answerMessage").className="message ok";
+    rateRevealed=true;$("programPump").style.display="block";render();
+  }else{
+    $("answerMessage").textContent="✗ Not quite. Enter the answer rounded to the nearest tenth (e.g., 125.0).";
+    $("answerMessage").className="message error";$("programPump").style.display="none";
+  }
+}
+
+function programCorrectRate(){
+  if(!currentScenario)return;
+  rate=Number((currentScenario.volume/(currentScenario.time/3600)).toFixed(1));
+  vtbi=currentScenario.volume;time=currentScenario.time;elapsed=0;selected="rate";rateRevealed=true;
+  clearPumpError();render();setMessage("Pump programmed. Press START when ready.","ok");
+}
+
+function validProgram(){
+  clearPumpError();
+  if(!rate||rate<=0||!vtbi||vtbi<=0||!time||time<=0){
+    setMessage("Enter positive values for RATE, VTBI, and TIME.","error");
+    showPumpError("ERROR — ENTER POSITIVE VALUES FOR RATE, VTBI, AND TIME.");
+    return false;
+  }
+  const calculatedTime=vtbi/(rate/3600);
+  if(Math.abs(calculatedTime-time)>2){
+    setMessage("RATE, VTBI, and TIME do not agree. Check the programmed values.","error");
+    showPumpError("ERROR — VOLUME, RATE, AND TIME DO NOT ALIGN.");
+    return false;
+  }
+  if(mode==="practice"){
+    const s=currentScenario;
+    const rateOK=Math.abs(rate-s.volume/(s.time/3600))<0.1;
+    const vtbiOK=Math.abs(vtbi-s.volume)<0.1;
+    const timeOK=Math.abs(time-s.time)<=2;
+    if(!(rateOK&&vtbiOK&&timeOK)){
+      setMessage("Programming does not match the IV order. Check RATE, VTBI, and TIME.","error");
+      showPumpError("ERROR — PROGRAMMING DOES NOT MATCH THE IV ORDER.");
+      return false;
+    }
+  }
+  clearPumpError();return true;
+}
+
+function start(){
+  if(running||!validProgram())return;
+  if(elapsed>=time)elapsed=0;
+  running=true;last=null;
+  $("practiceStart").disabled=true;$("practiceStop").disabled=false;
+  $("pumpStart").disabled=true;$("pumpStop").disabled=false;
+  $("dot").classList.add("running");$("status").textContent="RUNNING";
+  setMessage(mode==="practice"?"Correct programming. Infusion started.":"Infusion started.","ok");
+  clearPumpError();render();
+  animation=requestAnimationFrame(tick);
+}
+
+function tick(ts){
+  if(!running)return;
+  if(last===null)last=ts;
+  const delta=(ts-last)/1000;last=ts;
+  elapsed+=delta*parseFloat($("speed").value);
+  if(elapsed>=time){elapsed=time;render();finish();return}
+  render();animation=requestAnimationFrame(tick);
+}
+
+function stop(show=true){
+  running=false;
+  if(animation)cancelAnimationFrame(animation);
+  animation=null;last=null;
+  $("practiceStart").disabled=false;$("practiceStop").disabled=true;
+  $("pumpStart").disabled=false;$("pumpStop").disabled=true;
+  $("dot").classList.remove("running");$("status").textContent="STOPPED";
+  if(show)setMessage("Infusion paused. Press START to continue.");
+  render();
+}
+
+function finish(){
+  running=false;animation=null;
+  $("practiceStart").disabled=false;$("practiceStop").disabled=true;
+  $("pumpStart").disabled=false;$("pumpStop").disabled=true;
+  $("dot").classList.remove("running");$("status").textContent="COMPLETE";
+  setMessage("Infusion complete.","ok");render();
+}
+
+function resetPump(){
+  if(running)stop(false);
+  clearPumpError();rate=0;vtbi=0;time=0;elapsed=0;selected="rate";
+  if(mode==="practice")rateRevealed=false;
+  render();setMessage("Pump reset. Program RATE, VTBI, and TIME before starting.");
+}
+
+function setMode(m){
+  if(running)return;
+  clearPumpError();mode=m;
+  $("practiceMode").classList.toggle("active",m==="practice");
+  $("freeMode").classList.toggle("active",m==="free");
+  $("scenarioArea").style.display=m==="practice"?"block":"none";
+  $("answerArea").style.display=m==="practice"?"block":"none";
+  $("freeArea").style.display=m==="free"?"block":"none";
+  if(m==="practice")loadScenario();
+  else{
+    rate=0;vtbi=500;time=14400;elapsed=0;rateRevealed=false;selected="rate";
+    render();setMessage("Free Program mode: enter compatible RATE, VTBI, and TIME.");
+  }
+}
+
+$("selectRate").onclick=()=>selectField("rate");
+$("selectVtbi").onclick=()=>selectField("vtbi");
+$("selectTime").onclick=()=>selectField("time");
+document.querySelectorAll(".key").forEach(b=>b.onclick=()=>keyPress(b.dataset.key));
+$("screenInput").addEventListener("input",updateFromScreenInput);
+$("hoursInput").addEventListener("input",updateTimeFromScreen);
+$("minutesInput").addEventListener("input",updateTimeFromScreen);
+$("checkAnswer").onclick=checkRateAnswer;
+$("programPump").onclick=programCorrectRate;
+$("practiceStart").onclick=start;
+$("practiceStop").onclick=()=>stop(true);
+$("clear").onclick=()=>resetPump();
+$("pumpStart").onclick=start;
+$("pumpStop").onclick=()=>stop(true);
+$("pumpReset").onclick=resetPump;
+$("practiceMode").onclick=()=>setMode("practice");
+$("freeMode").onclick=()=>setMode("free");
+$("newScenario").onclick=loadScenario;
+$("speed").oninput=()=>$("speedValue").textContent=$("speed").value;
+$("freeBag").oninput=()=>{if(!running)render()};
+$("pumpOnly").onclick=()=>{document.body.classList.add("pump-only");window.scrollTo(0,0)};
+$("exitPumpOnly").onclick=()=>document.body.classList.remove("pump-only");
+
+loadScenario();
+</script>
+</body>
+</html>
