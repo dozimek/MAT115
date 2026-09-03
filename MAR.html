@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editable MAR Screen</title>
+  <style>
+    :root {
+      --sju-crimson: #9e1b32;
+      --sju-gray: #6c6f70;
+      --sju-dark: #3f4142;
+      --border: #d6d8da;
+      --panel: #f5f5f5;
+      --text: #252627;
+      --muted: #6c6f70;
+      --accent: #9e1b32;
+      --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top, #f4f4f4 0, #e7e7e7 45%, #d8d8d8 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 34px 18px 60px;
+    }
+
+    .monitor {
+      width: min(1500px, 96vw);
+      margin: 0 auto;
+    }
+
+    .monitor-bezel {
+      background: #242526;
+      padding: 18px 18px 24px;
+      border-radius: 22px;
+      box-shadow:
+        0 20px 45px rgba(0,0,0,.24),
+        inset 0 1px 0 rgba(255,255,255,.08);
+      border: 1px solid #151617;
+    }
+
+    .monitor-screen {
+      overflow: hidden;
+      border-radius: 9px;
+      background: white;
+      border: 1px solid #0e0f10;
+    }
+
+    .monitor-camera {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #111;
+      box-shadow: 0 0 0 2px #343536;
+      margin: -10px auto 10px;
+    }
+
+    .monitor-logo {
+      text-align: center;
+      color: #a7a7a7;
+      font-size: 11px;
+      letter-spacing: 2px;
+      padding-top: 11px;
+      user-select: none;
+    }
+
+    .monitor-neck {
+      width: 130px;
+      height: 60px;
+      margin: 0 auto;
+      background: linear-gradient(90deg, #555 0, #838383 50%, #555 100%);
+      border-left: 1px solid #444;
+      border-right: 1px solid #444;
+    }
+
+    .monitor-base {
+      width: 330px;
+      height: 18px;
+      margin: 0 auto;
+      border-radius: 50% 50% 18px 18px;
+      background: linear-gradient(#7e7e7e, #4b4b4b);
+      box-shadow: 0 8px 18px rgba(0,0,0,.20);
+    }
+
+    .app-shell {
+      max-width: none;
+      margin: 0;
+      background: var(--white);
+      border: 0;
+      border-radius: 0;
+      overflow: hidden;
+      box-shadow: none;
+    }
+
+    .topbar {
+      background: var(--sju-crimson);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 18px 24px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 18px;
+    }
+
+    .brand .mar {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    .brand .subtitle {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .toplinks {
+      display: flex;
+      gap: 20px;
+      font-size: 14px;
+      opacity: .95;
+      flex-wrap: wrap;
+    }
+
+
+    .course-title {
+      margin-top: 3px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .35px;
+      opacity: .92;
+    }
+
+    .student-user {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-weight: 600;
+    }
+
+    .student-user input {
+      width: 170px;
+      padding: 6px 8px;
+      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,.55);
+      background: rgba(255,255,255,.14);
+      color: white;
+      font-size: 14px;
+    }
+
+    .student-user input::placeholder {
+      color: rgba(255,255,255,.72);
+    }
+
+    .student-user input:focus {
+      outline: 2px solid rgba(255,255,255,.45);
+      border-color: white;
+    }
+
+    .preview-return {
+      display: none;
+      padding: 10px 18px;
+      background: #f4f4f4;
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+    }
+
+    .preview-mode .preview-return {
+      display: block;
+    }
+
+    .preview-return button {
+      background: var(--sju-crimson);
+      color: white;
+      border-color: var(--sju-crimson);
+    }
+
+    .preview-mode .student-user input {
+      pointer-events: none;
+      border-color: transparent !important;
+      background: transparent !important;
+      padding-left: 0;
+      font-weight: 700;
+    }
+
+    .section-title {
+      margin: 0;
+      padding: 13px 22px;
+      font-size: 18px;
+      font-weight: 700;
+      background: #f4f4f4;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .patient-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px 34px;
+      padding: 22px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .field {
+      display: grid;
+      grid-template-columns: 105px minmax(0,1fr);
+      align-items: center;
+      gap: 10px;
+    }
+
+    .field label {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    input, textarea {
+      width: 100%;
+      font: inherit;
+      color: inherit;
+      border: 1px solid #cfd6df;
+      border-radius: 6px;
+      background: white;
+      padding: 9px 10px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 56px;
+    }
+
+    input:focus, textarea:focus {
+      outline: 2px solid rgba(158,27,50,.2);
+      border-color: var(--accent);
+    }
+
+    .orders-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      background: #f4f4f4;
+      border-top: 4px solid var(--sju-crimson);
+      flex-wrap: wrap;
+    }
+
+    .orders-head h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid var(--sju-gray);
+      border-radius: 6px;
+      padding: 9px 13px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: white;
+      color: var(--text);
+    }
+
+    button:hover { background: #eeeeee; }
+
+    button.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    button.primary:hover { filter: brightness(.95); }
+
+    .table-wrap {
+      overflow-x: auto;
+      width: 100%;
+    }
+
+    table {
+      width: 100%;
+      min-width: 980px;
+      border-collapse: collapse;
+      table-layout: auto;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      padding: 8px;
+      vertical-align: middle;
+      background: white;
+    }
+
+    th {
+      background: #ececec;
+      color: var(--sju-dark);
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    th:last-child, td:last-child { border-right: 0; }
+
+    th input {
+      background: transparent;
+      border: 1px solid transparent;
+      text-align: center;
+      font-weight: 700;
+      padding: 6px;
+    }
+
+    td input, td textarea {
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 7px;
+    }
+
+    td input:focus, td textarea:focus {
+      background: white;
+      border-color: var(--accent);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 16px 18px;
+      background: #f4f4f4;
+      border-top: 1px solid var(--border);
+    }
+
+    .actions-right {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .status {
+      margin: 0;
+      padding: 10px 18px 18px;
+      color: var(--muted);
+      font-size: 13px;
+      background: #f4f4f4;
+    }
+
+    .preview-mode .editable-only { display: none !important; }
+
+    .preview-mode input,
+    .preview-mode textarea {
+      border-color: transparent !important;
+      background: transparent !important;
+      pointer-events: none;
+    }
+
+    .preview-mode th input {
+      font-weight: 700;
+    }
+
+    .preview-mode .app-shell {
+      box-shadow: none;
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 10px 5px 28px;
+      }
+
+      .monitor {
+        width: 100%;
+      }
+
+      .monitor-bezel {
+        padding: 9px 9px 14px;
+        border-radius: 12px;
+      }
+
+      .monitor-neck {
+        width: 80px;
+        height: 36px;
+      }
+
+      .monitor-base {
+        width: 210px;
+        height: 13px;
+      }
+
+      .patient-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field {
+        grid-template-columns: 95px minmax(0,1fr);
+      }
+
+      .brand .subtitle {
+        font-size: 16px;
+      }
+    }
+
+    @media print {
+      body { background: white; padding: 0; }
+      .monitor {
+        width: 100%;
+        margin: 0;
+      }
+      .monitor-bezel {
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background: white;
+      }
+      .monitor-screen {
+        border: 0;
+        border-radius: 0;
+      }
+      .monitor-camera,
+      .monitor-logo,
+      .monitor-neck,
+      .monitor-base {
+        display: none !important;
+      }
+      .app-shell {
+        margin: 0;
+        max-width: none;
+        border: 0;
+        box-shadow: none;
+      }
+      .editable-only,
+      .status {
+        display: none !important;
+      }
+      input, textarea {
+        border: 0 !important;
+        background: transparent !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="monitor">
+    <div class="monitor-bezel">
+      <div class="monitor-camera" aria-hidden="true"></div>
+      <div class="monitor-screen">
+        <main class="app-shell" id="marApp">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mar">MAR</div>
+        <div>
+          <div class="subtitle">Medication Administration Record</div>
+          <div class="course-title">MAT115 Clinical Mathematics</div>
+        </div>
+      </div>
+      <div class="toplinks">
+        <label class="student-user">
+          <span>👤 Nurse:</span>
+          <input id="studentName" type="text" placeholder="Enter your name" aria-label="Student nurse name">
+        </label>
+        <span>❔ Help</span>
+        <span>⏻ Log Out</span>
+      </div>
+    </header>
+
+    <div class="preview-return" id="previewReturn">
+      <button type="button" id="backToEdit">← Back to Editing</button>
+    </div>
+
+    <section>
+      <h2 class="section-title">Patient Information</h2>
+      <div class="patient-grid">
+        <div class="field"><label for="patientName">Patient</label><input id="patientName" value="Jordan Miller"></div>
+        <div class="field"><label for="location">Location</label><input id="location" value="Med/Surg 2B"></div>
+        <div class="field"><label for="mrn">MRN</label><input id="mrn" value="10024578"></div>
+        <div class="field"><label for="room">Room/Bed</label><input id="room" value="212 / 1"></div>
+        <div class="field"><label for="dob">DOB</label><input id="dob" value="04/18/1998"></div>
+        <div class="field"><label for="allergies">Allergies</label><input id="allergies" value="No known drug allergies"></div>
+        <div class="field"><label for="gender">Gender</label><input id="gender" value="Male"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="orders-head">
+        <h2>Medication Orders</h2>
+        <div class="toolbar editable-only">
+          <button type="button" id="addRow">+ Add Medication</button>
+          <button type="button" id="addColumn">+ Add Column</button>
+          <button type="button" id="previewBtn">Preview MAR</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table id="marTable" aria-label="Medication administration record">
+          <thead>
+            <tr id="headerRow">
+              <th><input value="Medication" aria-label="Column name"></th>
+              <th><input value="Dose" aria-label="Column name"></th>
+              <th><input value="Route" aria-label="Column name"></th>
+              <th><input value="Frequency" aria-label="Column name"></th>
+              <th><input value="Next Dose Due" aria-label="Column name"></th>
+              <th><input value="Last Given" aria-label="Column name"></th>
+            </tr>
+          </thead>
+          <tbody id="medBody">
+            <tr>
+              <td><textarea aria-label="Medication">Amoxicillin (oral suspension)</textarea></td>
+              <td><input value="250 mg" aria-label="Dose"></td>
+              <td><input value="PO" aria-label="Route"></td>
+              <td><input value="Every 8 hours" aria-label="Frequency"></td>
+              <td><input value="05/19/2025 14:00" aria-label="Next Dose Due"></td>
+              <td><input value="05/19/2025 06:00" aria-label="Last Given"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <div class="editable-only">
+          <button type="button" id="removeRow">Remove Last Row</button>
+          <button type="button" id="removeColumn">Remove Last Column</button>
+          <button type="button" id="resetBtn">Reset Example</button>
+        </div>
+        <div class="actions-right">
+          <button type="button" id="printBtn">Print MAR</button>
+          <button type="button" class="primary">Administer Medication</button>
+        </div>
+      </div>
+
+      <p id="status" class="status" aria-live="polite">
+        Click any patient field, medication cell, or column heading to edit it.
+      </p>
+    </section>
+        </main>
+      </div>
+      <div class="monitor-logo" aria-hidden="true">DISPLAY</div>
+    </div>
+    <div class="monitor-neck" aria-hidden="true"></div>
+    <div class="monitor-base" aria-hidden="true"></div>
+  </div>
+
+  <script>
+    (() => {
+      const app = document.getElementById('marApp');
+      const table = document.getElementById('marTable');
+      const body = document.getElementById('medBody');
+      const headerRow = document.getElementById('headerRow');
+      const status = document.getElementById('status');
+      const previewBtn = document.getElementById('previewBtn');
+
+      function columnCount() {
+        return headerRow.children.length;
+      }
+
+      function makeCell() {
+        const td = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = '';
+        input.setAttribute('aria-label', 'Medication field');
+        td.appendChild(input);
+        return td;
+      }
+
+      document.getElementById('addRow').addEventListener('click', () => {
+        if (body.rows.length >= 30) {
+          status.textContent = 'Maximum of 30 medication rows reached.';
+          return;
+        }
+        const row = document.createElement('tr');
+        for (let i = 0; i < columnCount(); i++) {
+          row.appendChild(makeCell());
+        }
+        body.appendChild(row);
+        status.textContent = 'Medication row added.';
+      });
+
+      document.getElementById('removeRow').addEventListener('click', () => {
+        if (body.rows.length <= 1) {
+          status.textContent = 'At least one medication row must remain.';
+          return;
+        }
+        body.deleteRow(body.rows.length - 1);
+        status.textContent = 'Last medication row removed.';
+      });
+
+      document.getElementById('addColumn').addEventListener('click', () => {
+        if (columnCount() >= 12) {
+          status.textContent = 'Maximum of 12 columns reached.';
+          return;
+        }
+
+        const name = window.prompt('Enter a name for the new column:', 'Notes');
+        if (!name || !name.trim()) {
+          status.textContent = 'Column was not added.';
+          return;
+        }
+
+        const th = document.createElement('th');
+        const input = document.createElement('input');
+        input.value = name.trim();
+        input.setAttribute('aria-label', 'Column name');
+        th.appendChild(input);
+        headerRow.appendChild(th);
+
+        Array.from(body.rows).forEach(row => row.appendChild(makeCell()));
+        status.textContent = 'Column added.';
+      });
+
+      document.getElementById('removeColumn').addEventListener('click', () => {
+        if (columnCount() <= 1) {
+          status.textContent = 'At least one column must remain.';
+          return;
+        }
+
+        headerRow.deleteCell(columnCount() - 1);
+        Array.from(body.rows).forEach(row => row.deleteCell(row.cells.length - 1));
+        status.textContent = 'Last column removed.';
+      });
+
+      function setPreviewMode(previewing) {
+        document.body.classList.toggle('preview-mode', previewing);
+        previewBtn.textContent = 'Preview MAR';
+        status.textContent = previewing
+          ? 'Preview mode enabled.'
+          : 'Edit mode enabled.';
+      }
+
+      previewBtn.addEventListener('click', () => {
+        setPreviewMode(true);
+      });
+
+      document.getElementById('backToEdit').addEventListener('click', () => {
+        setPreviewMode(false);
+      });
+
+      document.getElementById('printBtn').addEventListener('click', () => {
+        window.print();
+      });
+
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        window.location.reload();
+      });
+    })();
+  </script>
+</body>
+</html>
